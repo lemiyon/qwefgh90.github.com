@@ -345,26 +345,11 @@ declares the function as ``extern "C"``. *(번역하지 못한 부분)*
 C 에서 파이썬 함수 호출
 =======================
 
-So far we have concentrated on making C functions callable from Python.  The
-reverse is also useful: calling Python functions from C. This is especially the
-case for libraries that support so-called "callback" functions.  If a C
-interface makes use of callbacks, the equivalent Python often needs to provide a
-callback mechanism to the Python programmer; the implementation will require
-calling the Python callback functions from a C callback.  Other uses are also
-imaginable.
+우리는 파이썬에서 호출할 수 있는 C 함수를 만드는데 집중했다. 그 반대 또한 유용하다. (C에서 호출되는 파이썬 함수) 이것은 특히 callback 함수를 지원하는 라이브러리들을 위한 케이스이다. 만약 C 인터페이스가 콜백을 활용할 경우 이와 동등하게 파이썬은 종종 콜백 매커니즘을 파이썬 프로그래머에게 제공할 필요가 있다. 즉 구현내용은 C 콜백에서 파이썬 콜백을 호출하는 것이다. 이외에 다른 방법으로 사용할 수도 있을 것이다. 
 
-Fortunately, the Python interpreter is easily called recursively, and there is a
-standard interface to call a Python function.  (I won't dwell on how to call the
-Python parser with a particular string as input --- if you're interested, have a
-look at the implementation of the :option:`-c` command line option in
-:file:`Modules/main.c` from the Python source code.)
+운이 좋게도 파이썬 인터프리터는 쉽게 호출된다. 그리고 파이썬 함수를 호출할 수 있는 표준 인터페이스도 있다. (어떻게 파이썬 파서를 특수한 문자열과 함께 호출하는지 말하지 않을것이다. 만약 이것에 관심이 있다면 :file:`Modules/main.c 에 :option:`-c` 명령어 라인의 구현을 보는것을 추천한다.)
 
-Calling a Python function is easy.  First, the Python program must somehow pass
-you the Python function object.  You should provide a function (or some other
-interface) to do this.  When this function is called, save a pointer to the
-Python function object (be careful to :c:func:`Py_INCREF` it!) in a global
-variable --- or wherever you see fit. For example, the following function might
-be part of a module definition::
+파이썬 함수를 호출하는것은 쉽다. 첫째로 왜그런지 모르겠지만 파이썬 프로그램은 파이썬 함수 객체를 당신에게 전달한다. 당신은 이것을 하기 위한 함수를 제공해야한다. 이 함수가 호출되었을때 파이썬 함수 객체의 포인터를 저장하면 된다. (전역 변수에 저장할때 :c:func:`Py_INCREF` 를 호출하는 것에 유의해라) 그 예로 밑의 함수는 모듈 정의의 일부분이다.::
 
    static PyObject *my_callback = NULL;
 
@@ -389,26 +374,13 @@ be part of a module definition::
        return result;
    }
 
-This function must be registered with the interpreter using the
-:const:`METH_VARARGS` flag; this is described in section :ref:`methodtable`.  The
-:c:func:`PyArg_ParseTuple` function and its arguments are documented in section
-:ref:`parsetuple`.
+이 함수는 :const:`METH_VARARGS` 플래그와 할께 인터프리터에 등록되어 있어야 한다. 이 부분은 :ref:`methodtable` 섹션에 설명되어 있다. :c:func:`PyArg_ParseTuple` 함수와 인자들은 :ref:`parsetuple` 섹션에 설명되어 있다.
 
-The macros :c:func:`Py_XINCREF` and :c:func:`Py_XDECREF` increment/decrement the
-reference count of an object and are safe in the presence of *NULL* pointers
-(but note that *temp* will not be  *NULL* in this context).  More info on them
-in section :ref:`refcounts`.
+:c:func:`Py_XINCREF` 와 :c:func:`Py_XDECREF` 매크로는 객체의 참조 카운트를 증가시키거나 감소시킨다. 또한 이 매크로는 *NULL* 포인터에 안전하다. (그러나 *temp* 는 현재 문맥상 *NULL* 포인터가 될 수 없다.) 더 자세한 정보는 :ref:`refcounts` 섹션에 있다.
 
 .. index:: single: PyObject_CallObject()
 
-Later, when it is time to call the function, you call the C function
-:c:func:`PyObject_CallObject`.  This function has two arguments, both pointers to
-arbitrary Python objects: the Python function, and the argument list.  The
-argument list must always be a tuple object, whose length is the number of
-arguments.  To call the Python function with no arguments, pass in NULL, or
-an empty tuple; to call it with one argument, pass a singleton tuple.
-:c:func:`Py_BuildValue` returns a tuple when its format string consists of zero
-or more format codes between parentheses.  For example::
+나중에 이러한 함수를 호출할때 당신은 C 함수 :c:func:`PyObject_CallObject` 함수를 사용하면 된다. 이 함수는 2개의 인자를 가지고 있다. 둘다 임의의 파이썬 객체를 가르키는 포인터이다. 이 2가지 인자는 파이썬 함수와 인자리스트이다. 인자의 리스트는 언제나 튜플 객체이다. (인자의 개수만 길이를 가지는) 인자없는 파이썬 함수를 호출할때는 NULL을 인자로 넣어주거나 비어있는 튜플 객체를 전달하면 된다. 하나의 인자를 가지는 파이썬 함수를 호출할때는 싱글톤 튜플 객체를 넘기면 된다. :c:func:`Py_BuildValue` 는 괄호로 둘러쌓인 포맷 스트링을 입력받아 튜플 객체를 반환한다. 예를들어::
 
    int arg;
    PyObject *arglist;
@@ -421,39 +393,20 @@ or more format codes between parentheses.  For example::
    result = PyObject_CallObject(my_callback, arglist);
    Py_DECREF(arglist);
 
-:c:func:`PyObject_CallObject` returns a Python object pointer: this is the return
-value of the Python function.  :c:func:`PyObject_CallObject` is
-"reference-count-neutral" with respect to its arguments.  In the example a new
-tuple was created to serve as the argument list, which is :c:func:`Py_DECREF`\
--ed immediately after the :c:func:`PyObject_CallObject` call.
 
-The return value of :c:func:`PyObject_CallObject` is "new": either it is a brand
-new object, or it is an existing object whose reference count has been
-incremented.  So, unless you want to save it in a global variable, you should
-somehow :c:func:`Py_DECREF` the result, even (especially!) if you are not
-interested in its value.
 
-Before you do this, however, it is important to check that the return value
-isn't *NULL*.  If it is, the Python function terminated by raising an exception.
-If the C code that called :c:func:`PyObject_CallObject` is called from Python, it
-should now return an error indication to its Python caller, so the interpreter
-can print a stack trace, or the calling Python code can handle the exception.
-If this is not possible or desirable, the exception should be cleared by calling
-:c:func:`PyErr_Clear`.  For example::
+:c:func:`PyObject_CallObject` 은 파이썬 객체 포인터를 반환한다. 이것은 파이썬 함수의 반환값이다. :c:func:`PyObject_CallObject` 함수는 입력 인자에 관해 "참조-카운트-중립" 이라는 특성을 지니고 있다. :c:func:`PyObject_CallObject` 를 호출한 후에 바로 :c:func:`Py_DECREF` 에 :c:func:`PyObject_CallObject` 의 인자로 사용된 투플을 입력 인자로 넣고 호출한다. (*역자* 사용된 튜플을 가비지 컬렉팅하기 위해 호출하는 것으로 이해함.)
+
+:c:func:`PyObject_CallObject` 의 반환값은 새로운 객체이거나 존재하는 객체(참조 카운트가 증가된)이다. 그래서 만약 당신이 전역변수에 저장하는것을 원하지 않는다면 당신은 :c:func:`Py_DECREF` 를 호출해야한다. 특히 이 변수에 관심이 없을때 사용하면 된다.
+
+당신이 이것을 하기전에 반환값이 *NULL* 인지 확인하는것이 중요하다. 만약 그렇다면 파이썬 함수는 예외를 발생하며 종료된 것이다. 만약 :c:func:`PyObject_CallObject` 를 호출한 C 코드가 파이썬에서 호출된 것이라면 에러 징후를 바로 반환하며 호출자에게 알려야 한다. 그러면 인터프리터는 스택 추적 내역을 출력하거나 예외 처리 함수를 호출할 것이다. 만약 이것을 원하지 않는다면 예외는 :c:func:`PyErr_Clear` 를 호출함으로써 제거하면 된다. 예를들어::
 
    if (result == NULL)
        return NULL; /* Pass error back */
    ...use result...
    Py_DECREF(result);
 
-Depending on the desired interface to the Python callback function, you may also
-have to provide an argument list to :c:func:`PyObject_CallObject`.  In some cases
-the argument list is also provided by the Python program, through the same
-interface that specified the callback function.  It can then be saved and used
-in the same manner as the function object.  In other cases, you may have to
-construct a new tuple to pass as the argument list.  The simplest way to do this
-is to call :c:func:`Py_BuildValue`.  For example, if you want to pass an integral
-event code, you might use the following code::
+파이썬 콜백 함수의 인터페이스에 따라 당신은 인자 리스트를 :c:func:`PyObject_CallObject` 에 제공할 것이다. 몇몇 케이스에서 인자 리스트는 파이썬 프로그램에서 제공된다. 이것은 저장될 수 있고 함수 객체와 같은 방식으로 사용된다. 몇몇 다른 케이스에선 당신은 새로운 튜플을 생성할 필요도 있다. 가장 간단한 방식은 :c:func:`Py_BuildValue` 를 호출하는 것이다. 예를들어 만약 당신이 전체 이벤트 코드를 전달하기 원한다면 아래 코드를 사용하면 된다.::
 
    PyObject *arglist;
    ...
@@ -465,13 +418,9 @@ event code, you might use the following code::
    /* Here maybe use the result */
    Py_DECREF(result);
 
-Note the placement of ``Py_DECREF(arglist)`` immediately after the call, before
-the error check!  Also note that strictly speaking this code is not complete:
-:c:func:`Py_BuildValue` may run out of memory, and this should be checked.
+에러 체크를 하기 전에 함수를 호출한 후 바로 ``Py_DECREF(arglist)`` 를 호출해라. 또한 엄격하게 말해서 이 코드는 완벽하지 않다. :c:func:`Py_BuildValue` 역시 메모리 부족이 발생할 수 있고 이것 역시 에러가 검사되어야 완벽하다.
 
-You may also call a function with keyword arguments by using
-:c:func:`PyObject_Call`, which supports arguments and keyword arguments.  As in
-the above example, we use :c:func:`Py_BuildValue` to construct the dictionary. ::
+당신은 :c:func:`PyObject_Call` 을 사용함으로써 키워드 인자들을 사용해 함수를 호출할 수 있다. 위의 예제에서 우리는 :c:func:`Py_BuildValue` 를 사용하여 키워드 인자를 만들 수 있다. ::
 
    PyObject *dict;
    ...
@@ -486,30 +435,25 @@ the above example, we use :c:func:`Py_BuildValue` to construct the dictionary. :
 
 .. _parsetuple:
 
-Extracting Parameters in Extension Functions
+확장 함수에서의 매개변수 파싱
 ============================================
 
 .. index:: single: PyArg_ParseTuple()
 
-The :c:func:`PyArg_ParseTuple` function is declared as follows::
+:c:func:`PyArg_ParseTuple` 함수는 아래와 같이 선언되어 있다.::
 
    int PyArg_ParseTuple(PyObject *arg, char *format, ...);
 
-The *arg* argument must be a tuple object containing an argument list passed
-from Python to a C function.  The *format* argument must be a format string,
-whose syntax is explained in :ref:`arg-parsing` in the Python/C API Reference
-Manual.  The remaining arguments must be addresses of variables whose type is
-determined by the format string.
+*arg* 인자는 파이썬에서 C 함수로 전달된 인자리스트를 포함한 튜플 객체이다.
+*format* 인자는 :ref:`arg-parsing` 에 설명된 문법대로 구성된 포맷 스트링이다.
+나머지 인자는 포맷 스트링에 정의된 변수의 주소이다. 
 
-Note that while :c:func:`PyArg_ParseTuple` checks that the Python arguments have
-the required types, it cannot check the validity of the addresses of C variables
-passed to the call: if you make mistakes there, your code will probably crash or
-at least overwrite random bits in memory.  So be careful!
+:c:func:`PyArg_ParseTuple` 은 파이썬 인자가 요구한 타입과 일치하는지 확인한다. 이것은 호출시 전달된 C 변수의 주소의 타당성을 검사할 수 없다. 만약 그 부분에 실수가 발생한다면 당신의 코드는 크래시를 발생시키거나 메모리상 임의의 비트를 덮어쓰게 된다. 
+이 부분을 주의해라!
 
-Note that any Python object references which are provided to the caller are
-*borrowed* references; do not decrement their reference count!
+호출자에게 제공되는 파이썬 객체는 *빌린* 객체다. 굳이 참조 카운트를 감소시킬 필요가 없다.
 
-Some example calls::
+호출 예제::
 
    int ok;
    int i, j;
@@ -573,15 +517,17 @@ Some example calls::
 
 .. _parsetupleandkeywords:
 
-Keyword Parameters for Extension Functions
+확장함수를 위한 키워드 매개변수 
 ==========================================
 
 .. index:: single: PyArg_ParseTupleAndKeywords()
 
-The :c:func:`PyArg_ParseTupleAndKeywords` function is declared as follows::
+:c:func:`PyArg_ParseTupleAndKeywords` 함수는 아래와 같이 정의되어 있다.::
 
    int PyArg_ParseTupleAndKeywords(PyObject *arg, PyObject *kwdict,
                                    char *format, char *kwlist[], ...);
+
+*arg* 와 *format* 매개변수는 :c:func:`PyArg_ParseTuple` 함수와 동일하다. *kwdict* 매개변수는 3번재 매개변수로 전달 받는 사전형태의 변수이다. *kwlist* 매개변수는 *NULL* 로 끝나는 문자열들의 리스트이다. 이름들은 *format* 으로부터 전달된 타입 정보와 어울린다. 성공한다면 :c:func:`PyArg_ParseTupleAndKeywords` 함수는 true를 반환하고 그렇지 않다면 false를 변환하고 적절한 예외를 발생시킬 것이다. 
 
 The *arg* and *format* parameters are identical to those of the
 :c:func:`PyArg_ParseTuple` function.  The *kwdict* parameter is the dictionary of
@@ -593,14 +539,11 @@ it returns false and raises an appropriate exception.
 
 .. note::
 
-   Nested tuples cannot be parsed when using keyword arguments!  Keyword parameters
-   passed in which are not present in the *kwlist* will cause :exc:`TypeError` to
-   be raised.
+   키워드 인자를 사용할때 튜플은 파싱될 수 없다. *kwlist* 에 존재하지않는 키워드 매개변수는 :exc:`TypeError` 를 발생시킨다. 
 
 .. index:: single: Philbrick, Geoff
 
-Here is an example module which uses keywords, based on an example by Geoff
-Philbrick (philbrick@hks.com)::
+여기에 키워드를 사용한 예제가 있다. 이 예제는 Geoff Philbrick (philbrick@hks.com)이 작성하였다.::
 
    #include "Python.h"
 
@@ -649,28 +592,18 @@ Philbrick (philbrick@hks.com)::
 
 .. _buildvalue:
 
-Building Arbitrary Values
+변수 생성
 =========================
 
-This function is the counterpart to :c:func:`PyArg_ParseTuple`.  It is declared
-as follows::
+이 함수는 :c:func:`PyArg_ParseTuple` 와 대응 관계가 있다. 이것은 아래와 같이 선언되어 있다.::
 
    PyObject *Py_BuildValue(char *format, ...);
 
-It recognizes a set of format units similar to the ones recognized by
-:c:func:`PyArg_ParseTuple`, but the arguments (which are input to the function,
-not output) must not be pointers, just values.  It returns a new Python object,
-suitable for returning from a C function called from Python.
+:c:func:`PyArg_ParseTuple` 에서 인지되는 포맷스트링과 유사하다. 그러나 함수의 입력으로 들어오는 인자들은 반드시 포인터일 필요가 없다. 이것은 새로운 파이썬 객체를 반환한다. 이는 C 함수의 반환값에 사용될때 적절하다.
 
-One difference with :c:func:`PyArg_ParseTuple`: while the latter requires its
-first argument to be a tuple (since Python argument lists are always represented
-as tuples internally), :c:func:`Py_BuildValue` does not always build a tuple.  It
-builds a tuple only if its format string contains two or more format units. If
-the format string is empty, it returns ``None``; if it contains exactly one
-format unit, it returns whatever object is described by that format unit.  To
-force it to return a tuple of size 0 or one, parenthesize the format string.
+:c:func:`PyArg_ParseTuple`: 은 첫번째 인자로 튜플을 요구하지만 (파이썬 인자리스트는 내부적으로 튜플이다) :c:func:`Py_BuildValue` 은 언제나 튜플을 만들지 않는다. 오직 포맷 스트링이 두개 이상의 포맷 요소들을 포함할때 튜플을 만든다. 만약 포맷 스트링이 비어있다면 이것은 ``None`` 을 반환할 것이다. 만약 정확하게 하나의 포맷 요소를 포함한다면 이것은 이 포맷 요소가 묘사된 어떤 객체를 반환할 것이다. 강제로 사이즈가 없는 튜플을 반환하게 하도록 하기 위해선 괄호 쌍을 포맷 스트링으로 주면 된다.
 
-Examples (to the left the call, to the right the resulting Python value)::
+예제 (왼쪽은 호출 형태이고 오른쪽은 반환된 파이썬 변수이다.)::
 
    Py_BuildValue("")                        None
    Py_BuildValue("i", 123)                  123
@@ -691,130 +624,46 @@ Examples (to the left the call, to the right the resulting Python value)::
 
 .. _refcounts:
 
-Reference Counts
-================
+참조 카운트
+=============
 
-In languages like C or C++, the programmer is responsible for dynamic allocation
-and deallocation of memory on the heap.  In C, this is done using the functions
-:c:func:`malloc` and :c:func:`free`.  In C++, the operators ``new`` and
-``delete`` are used with essentially the same meaning and we'll restrict
-the following discussion to the C case.
+C나 C++ 언어에서 프로그래머는 힙 메모리 동적할당과 할당해제에 대한 책임을 지게된다. C에서는 :c:func:`malloc` 그리고 :c:func:`free` 함수를 사용한다. C++ 에서는 ``new`` 연산자나 ``delete`` 연산자를 사용한다. 
 
-Every block of memory allocated with :c:func:`malloc` should eventually be
-returned to the pool of available memory by exactly one call to :c:func:`free`.
-It is important to call :c:func:`free` at the right time.  If a block's address
-is forgotten but :c:func:`free` is not called for it, the memory it occupies
-cannot be reused until the program terminates.  This is called a :dfn:`memory
-leak`.  On the other hand, if a program calls :c:func:`free` for a block and then
-continues to use the block, it creates a conflict with re-use of the block
-through another :c:func:`malloc` call.  This is called :dfn:`using freed memory`.
-It has the same bad consequences as referencing uninitialized data --- core
-dumps, wrong results, mysterious crashes.
+:c:func:`malloc` 에 의해 할당된 모든 메모리 블럭은 결국 :c:func:`free` 함수 호출과 함께 반환된다. :c:func:`free` 를 제때 호출하는 것은 매우 중요하다. 만약 :c:func:`free` 를 호출하지 않는다면 프로그램이 종료될때까지 메모리는 재사용될 수 없다. 이것은 소위 :dfn:`memory leak` 이라 불린다. 만약 프로그램이 :c:func:`free` 를 호출한 이후에도 블록을 계속해서 사용한다면 이것은 다른 :c:func:`malloc` 호출로 재사용되는 블록과 충돌을 발생시킬 것이다. 이것은 소위 :dfn:`using freed memory` 라 불린다. 이것은 코어 덤프, 잘못된 결과, 알수없는 크래시를 발생 시키게 된다. 
 
-Common causes of memory leaks are unusual paths through the code.  For instance,
-a function may allocate a block of memory, do some calculation, and then free
-the block again.  Now a change in the requirements for the function may add a
-test to the calculation that detects an error condition and can return
-prematurely from the function.  It's easy to forget to free the allocated memory
-block when taking this premature exit, especially when it is added later to the
-code.  Such leaks, once introduced, often go undetected for a long time: the
-error exit is taken only in a small fraction of all calls, and most modern
-machines have plenty of virtual memory, so the leak only becomes apparent in a
-long-running process that uses the leaking function frequently.  Therefore, it's
-important to prevent leaks from happening by having a coding convention or
-strategy that minimizes this kind of errors.
+일반적으로 메모리 릭의 원인은 비정상적인 코드이다. 예를들어 함수에서 메모리를 할당하고 계산한다음 메모리 블록을 반환한다. 어떤 함수에 대한 요구사항의 변화로 에러 상태를 탐지하는 테스트 코드를 추가할 것이다. 그리고 너무 이르게 함수가 반환할 수 있다. 너무 이르게 함수가 종료 되었을때 할당된 메모리 블럭을 반환하는것을 잊기 쉽다. 특히 이것이 나중에 추가되었을때 더욱 그렇다. 이러한 누수는 종종 오랜 시간동안 감지되지 않는다. 에러로 인해 함수를 빠져나가는 것은 수 많은 함수 호출의 일부분이다. 대부분의 현대 컴퓨터들은 풍부한 가상 메모리를 가지고 있기 때문에 메모리 릭은 누수 함수를 자주 사용하며 오래동안 동작하는 프로세스에서 발생한다. 그러므로 코딩 관습이나 그러한 에러를 최소화하는 전략을 사용하여 메모리 릭을 예방하는것은 매우 중요하다. 
 
-Since Python makes heavy use of :c:func:`malloc` and :c:func:`free`, it needs a
-strategy to avoid memory leaks as well as the use of freed memory.  The chosen
-method is called :dfn:`reference counting`.  The principle is simple: every
-object contains a counter, which is incremented when a reference to the object
-is stored somewhere, and which is decremented when a reference to it is deleted.
-When the counter reaches zero, the last reference to the object has been deleted
-and the object is freed.
+파이썬은 :c:func:`malloc` 과 :c:func:`free` 함수를 많이 이용하기 때문에 해제된 메모리 사용과 메모리 릭을 피할 수 있는 전략이 필요하다. 파이썬에서 채택한 방법은 :dfn:`reference counting` 기법이다. 원리는 간단하다. 모든 객체는 객체의 참조값이 저장될때 값 증가하는 카운터를 가지고 있다. 참조값을 저장하지 않을때면 값이 줄어들게 된다. 카운터가 0에 도달하게 되면 객체에 대한 마지막 참조가 삭제되었단 뜻이고 객체는 메모리 해제될 것이다.
 
-An alternative strategy is called :dfn:`automatic garbage collection`.
+An alternative strategy is called :dfn:`automatic garbage collection` .
 (Sometimes, reference counting is also referred to as a garbage collection
-strategy, hence my use of "automatic" to distinguish the two.)  The big
-advantage of automatic garbage collection is that the user doesn't need to call
-:c:func:`free` explicitly.  (Another claimed advantage is an improvement in speed
-or memory usage --- this is no hard fact however.)  The disadvantage is that for
-C, there is no truly portable automatic garbage collector, while reference
-counting can be implemented portably (as long as the functions :c:func:`malloc`
-and :c:func:`free` are available --- which the C Standard guarantees). Maybe some
-day a sufficiently portable automatic garbage collector will be available for C.
-Until then, we'll have to live with reference counts.
+strategy, hence my use of "automatic" to distinguish the two.) 자동 가비지 컬렉션의 큰 이점은 사용자가 :c:func:`free` 를 명시적으로 호출할 필요가 없는 것이다. (다른 이점으론 속도의 향상과 메모리 사용이다.) 단점은 C 에선 자동 가비지 컬렉터를 가지고 있지 않다는 것이다. 참조 카운팅은 간편하게 구현될 수 있다. 언젠가 자동 가비지 컬렉터가 C 에서 이용 가능할 것이다. 그때까지 우리는 참조 카운트와 함께 지내야할 것이다.
 
-While Python uses the traditional reference counting implementation, it also
-offers a cycle detector that works to detect reference cycles.  This allows
-applications to not worry about creating direct or indirect circular references;
-these are the weakness of garbage collection implemented using only reference
-counting.  Reference cycles consist of objects which contain (possibly indirect)
-references to themselves, so that each object in the cycle has a reference count
-which is non-zero.  Typical reference counting implementations are not able to
-reclaim the memory belonging to any objects in a reference cycle, or referenced
-from the objects in the cycle, even though there are no further references to
-the cycle itself.
+파이썬은 전통적인 참조 카운팅 구현을 사용하면서 참조 사이클을 검사하는 사이클 탐지기를 제공한다. 이것은 어플리케이션이 직접 또는 간접 원형 참조가 생기는지 걱정하지 않게한다. 이것은 오직 참조 카운팅만 사용했을 때의 약점이다. 참조 사이클은 그들 스스로를 참조하는 객체들로 구성되어 있다. 사이클의 각각의 객체들은 참조 카운트는 0이 될 수 없다. 사이클에 대한 참조가 더이상 없더라도 전형적인 참조 카운팅 구현들은 사이클에 포함된 객체들에 속하는 메모리들을 되찾을 수 없다. 또 사이클 속 객체들에 의해 참조되는 메모리들도 마찬가지 이다.
 
-The cycle detector is able to detect garbage cycles and can reclaim them so long
-as there are no finalizers implemented in Python (:meth:`__del__` methods).
-When there are such finalizers, the detector exposes the cycles through the
-:mod:`gc` module (specifically, the :attr:`~gc.garbage` variable in that module).
-The :mod:`gc` module also exposes a way to run the detector (the
-:func:`~gc.collect` function), as well as configuration
-interfaces and the ability to disable the detector at runtime.  The cycle
-detector is considered an optional component; though it is included by default,
-it can be disabled at build time using the :option:`--without-cycle-gc` option
-to the :program:`configure` script on Unix platforms (including Mac OS X) or by
-removing the definition of ``WITH_CYCLE_GC`` in the :file:`pyconfig.h` header on
-other platforms.  If the cycle detector is disabled in this way, the :mod:`gc`
-module will not be available.
+사이클 탐지기는 파이썬에 종결자(:dfn:`finalizer`)만 없다면 가비지 사이클을 참지할 수 있고 그 메모리를 되찾을 수 있다 (:meth:`__del__` methods). 만약 종결자가 있다면 탐지기는 :mod:`gc` 모듈에 사이클을 노출시킨다. (특히, 모듈 안의 :attr:`~gc.garbage` 변수) :mod:`gc` 모듈은 탐지기를 동작시키는 (:func:`~gc.collect` 함수) 방법과 인터페이스 구성 그리고 런타임에 탐지기를 사용하지 않는 방법을 알려준다. 사이클 탐지기는 기본적으로 포함되어 있지만 부가적인 컴포넌트이다. 이것은 빌드하는 시기에 :option:`--without-cycle-gc` 옵션을 :program:`configure` 스크립트에 추가(유닉스 계열)하거나 ``WITH_CYCLE_GC`` 정의를 :file:`pyconfig.h` 헤더에서 제거 함으로써 중단시킬 수 있다. 만약 이런 방식으로 사이클 탐지기가 중단된다면 :mod:`gc` 모듈을 이용할 수 없을것이다. 
 
 
 .. _refcountsinpython:
 
-Reference Counting in Python
+파이썬에서 참조 카운팅
 ----------------------------
 
-There are two macros, ``Py_INCREF(x)`` and ``Py_DECREF(x)``, which handle the
-incrementing and decrementing of the reference count. :c:func:`Py_DECREF` also
-frees the object when the count reaches zero. For flexibility, it doesn't call
-:c:func:`free` directly --- rather, it makes a call through a function pointer in
-the object's :dfn:`type object`.  For this purpose (and others), every object
-also contains a pointer to its type object.
+참조 카운트를 증가, 감소 시킬 수 있는 ``Py_INCREF(x)`` , ``PyDECREF(x)`` 매크로가 있다. 또한 카운트가 0에 도달 했을때 :c:func:`Py_DECREF` 는 객체를 해제한다. 유연성을 위해 이것은 직접적으로 :c:func:`free` 를 호출하지 않고 이 객체의 :dfn:`type object` 안의 함수 포인터를 통해 호출한다. 이러한 방식을 위해 모든 객체는 이것의 타입 객체에 대한 포인터를 포함하고 있다. 
 
-The big question now remains: when to use ``Py_INCREF(x)`` and ``Py_DECREF(x)``?
-Let's first introduce some terms.  Nobody "owns" an object; however, you can
+가장 큰 문제는 언제 ``Py_INCREF(x)`` 와 ``Py_DECREF(x)`` 를 사용하는게 좋은지이다. 먼저 몇몇 용어를 소개하겠다. Nobody "owns" an object; however, you can
 :dfn:`own a reference` to an object.  An object's reference count is now defined
-as the number of owned references to it.  The owner of a reference is
-responsible for calling :c:func:`Py_DECREF` when the reference is no longer
-needed.  Ownership of a reference can be transferred.  There are three ways to
-dispose of an owned reference: pass it on, store it, or call :c:func:`Py_DECREF`.
-Forgetting to dispose of an owned reference creates a memory leak.
+as the number of owned references to it. 참조가 더이상 필요하지 않을때 참조의 주인은 :c:func:`Py_DECREF` 를 호출할 책임이 있다. 참조에 대한 소유권은 전이될 수 있다. 소유한 참조를 제거할 수 있는 3가지 방법이 있다. 이것을 전달하거나 저장하거나 :c:func:`Py_DECREF` 를 호출하는 것이다. 참조를 제거하는것을 잊는다면 메모리 릭이 발생할 것이다.
 
-It is also possible to :dfn:`borrow` [#]_ a reference to an object.  The
-borrower of a reference should not call :c:func:`Py_DECREF`.  The borrower must
-not hold on to the object longer than the owner from which it was borrowed.
-Using a borrowed reference after the owner has disposed of it risks using freed
-memory and should be avoided completely. [#]_
+[#]_ 객체에 대한 참조를 :dfn:`borrow` 하는것이 가능하다. 참조의 임차인은 :c:func:`Py_DECREF` 를 호출할 필요가 없다. 암치인은 그 객체의 주인보다 오랫동안 객체를 가지고 있어선 안된다. 객체의 주인이 그것을 버린 후 임차인이 객체를 사용하는것은 :dfn:`using freed memory` 를 발생 시킬 수 있으므로 그러지 않아야 한다. [#]_
 
-The advantage of borrowing over owning a reference is that you don't need to
-take care of disposing of the reference on all possible paths through the code
---- in other words, with a borrowed reference you don't run the risk of leaking
-when a premature exit is taken.  The disadvantage of borrowing over owning is
-that there are some subtle situations where in seemingly correct code a borrowed
-reference can be used after the owner from which it was borrowed has in fact
-disposed of it.
+객체를 빌리는것의 이점은 당신이 객체를 버리는것에 관심을 가질 필요가 없다는 점이다. 빌린 참조를 사용할때는 예상보다 빠르게 함수가 종료되더라도 메모리 릭에 대한 위험이 없다. 참조를 빌르는것의 단점으로는 미묘한 상황이 발생할 수 있다는 점이다. 참조의 소유자가 객체를 제거한 후에 겉보기엔 빌린 객체가 사용되는 상황이다.
 
-A borrowed reference can be changed into an owned reference by calling
-:c:func:`Py_INCREF`.  This does not affect the status of the owner from which the
-reference was borrowed --- it creates a new owned reference, and gives full
-owner responsibilities (the new owner must dispose of the reference properly, as
-well as the previous owner).
-
+:c:func:`Py_INCREF` 를 호출함으로써 빌린 참조는 소유한 참조로 변할 수 있다. 이것은 빌려준 주인의 상태에 전혀 영향을 미치지 않는다. 이것은 새로운 소유 참조를 만들것이고 완벽한 소유 책임을 부여할 것이다. 이전 소유자와 새로운 소유자는 참조를 적절히 버려야한다.)
 
 .. _ownershiprules:
 
-Ownership Rules
+소유권 규칙
 ---------------
 
 Whenever an object reference is passed into or out of a function, it is part of
