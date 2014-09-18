@@ -666,42 +666,20 @@ as the number of owned references to it. 참조가 더이상 필요하지 않을
 소유권 규칙
 ---------------
 
-Whenever an object reference is passed into or out of a function, it is part of
-the function's interface specification whether ownership is transferred with the
-reference or not.
+함수 입출력으로 객체 참조가 전달될때 소유권이 전달되는지 안되는지는 함수의 인터페이스 명세의 일부분이다.
 
-Most functions that return a reference to an object pass on ownership with the
-reference.  In particular, all functions whose function it is to create a new
-object, such as :c:func:`PyInt_FromLong` and :c:func:`Py_BuildValue`, pass
-ownership to the receiver.  Even if the object is not actually new, you still
-receive ownership of a new reference to that object.  For instance,
-:c:func:`PyInt_FromLong` maintains a cache of popular values and can return a
-reference to a cached item.
+객체의 참조를 반환하는 대부분의 함수는 소유권을 참조와 함께 전달한다. 특히 새로운 객체를 만드는 함수인 :c:func:`PyInt_FromLong` 나 :c:func:`Py_BuildValue` 은 호출자에게 소유권을 전달한다. 비록 실제로 객체가 새롭지 않더라도 당신은 그 객체 참조의 소유권을 받을 것이다. 예를들어 :c:func:`PyInt_FromLong` 은 인기있는 변수의 캐시를 유지하고 캐시된 항목의 참조값을 반환할 수 있다.
 
-Many functions that extract objects from other objects also transfer ownership
-with the reference, for instance :c:func:`PyObject_GetAttrString`.  The picture
-is less clear, here, however, since a few common routines are exceptions:
-:c:func:`PyTuple_GetItem`, :c:func:`PyList_GetItem`, :c:func:`PyDict_GetItem`, and
-:c:func:`PyDict_GetItemString` all return references that you borrow from the
-tuple, list or dictionary.
+다른 객체로부터 객체를 생성해주는 함수들 또한 소유권을 전달한다. 예를들어 :c:func:`PyObject_GetAttrString` 와 같은 함수가 있다. 그러나 모두 그렇지는 않다. :c:func:`PyTuple_GetItem`, :c:func:`PyList_GetItem`, :c:func:`PyDict_GetItem`, 그리고
+:c:func:`PyDict_GetItemString` 는 너가 빌려준 튜플, 리스트, 딕셔너리를 반환한다.
 
-The function :c:func:`PyImport_AddModule` also returns a borrowed reference, even
-though it may actually create the object it returns: this is possible because an
-owned reference to the object is stored in ``sys.modules``.
+비록 실제로 객체를 만들어 반환할지라도 :c:func:`PyImport_AddModule` 함수 또한 빌린 참조를 반환한다. 소유한 참조는 ``sys.modules`` 에 저장되어 있기 때문이다.
 
-When you pass an object reference into another function, in general, the
-function borrows the reference from you --- if it needs to store it, it will use
-:c:func:`Py_INCREF` to become an independent owner.  There are exactly two
-important exceptions to this rule: :c:func:`PyTuple_SetItem` and
-:c:func:`PyList_SetItem`.  These functions take over ownership of the item passed
-to them --- even if they fail!  (Note that :c:func:`PyDict_SetItem` and friends
-don't take over ownership --- they are "normal.")
+당신이 객체 참조를 다른 함수로 전달했을때 일반적으로 함수는 참조를 당신으로부터 빌리게 된다. 만약 이 변수를 저장할 필요가 있다면 :c:func:`Py_INCREF` 를 사용해라. 이 규칙에는 정확히 2개의 중요한 예외가 있다. :c:func:`PyTuple_SetItem` 과 :c:func:`PyList_SetItem` 이다. 이 함수들은 자신들에게 전달된 아이템의 소유권을 인계받는다. 비록 그들이 실패하더라도 그렇다. (:c:func:`PyDict_SetItem` 과 그 비슷한 함수들은 소유권을 가져가지 않는다. 그 함수들은 정상이라 할 수 있다.)
 
-When a C function is called from Python, it borrows references to its arguments
-from the caller.  The caller owns a reference to the object, so the borrowed
-reference's lifetime is guaranteed until the function returns.  Only when such a
-borrowed reference must be stored or passed on, it must be turned into an owned
-reference by calling :c:func:`Py_INCREF`.
+파이썬으로 부터 C 함수가 호출될때 이것은 호출자로 부터 전달된 참조값을 빌린다. 호출자가 객체의 참조를 소유한다. 그래서 빌린 참조의 생존시간은 함수가 리턴될때 까지 보증된다. 오직 그러한 빌린 참조가 저장되거나 전달될때 :c:func:`Py_INCREF` 를 호출 함으로써 이것은 소유한 참조로 변하게 된다.
+
+이 파이썬으로부터 호출된 C 함수로 부터 반환된 객체 참조는 소유된 참조여야 한다. 즉 소유권은 함수에서 호출자에게 전달된다.
 
 The object reference returned from a C function that is called from Python must
 be an owned reference --- ownership is transferred from the function to its
